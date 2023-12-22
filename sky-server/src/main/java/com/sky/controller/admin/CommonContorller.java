@@ -21,7 +21,7 @@ import java.util.UUID;
 @RequestMapping("/admin/common")
 @RestController
 @Slf4j
-@Api
+@Api(tags = "图片上传")
 public class CommonContorller {
 
     @Value("${reggie.path}")
