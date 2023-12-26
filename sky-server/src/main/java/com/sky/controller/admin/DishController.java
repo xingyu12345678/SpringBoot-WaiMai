@@ -12,6 +12,9 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.Request;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,13 +41,14 @@ public class DishController {
      */
     @PostMapping
     @ApiOperation("新增菜品")
+    @CacheEvict(cacheNames = "setmealCache", key = "#dishDTO.categoryId")
     public Result save(@RequestBody DishDTO dishDTO){
         log.info("新增菜品：{}",dishDTO);
         dishService.saveWithFlavar(dishDTO);
 
         String key = "dish_" + dishDTO.getCategoryId();
 
-        cleanCache(key);
+//        cleanCache(key);
 
         return Result.success();
     }
@@ -70,10 +74,11 @@ public class DishController {
      */
     @DeleteMapping
     @ApiOperation("批量删除")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result delect(@RequestParam List<Long> ids){
         log.info("批量删除:{}",ids);
         dishService.delectBatch(ids);
-        cleanCache("dish_*");
+//        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -97,11 +102,12 @@ public class DishController {
      */
     @PutMapping
     @ApiOperation("修改菜品")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result update(@RequestBody DishDTO dishDTO){
         log.info("修改菜品:{}",dishDTO);
         dishService.updateWitchFlavor(dishDTO);
 
-        cleanCache("dish_*");
+//        cleanCache("dish_*");
         return Result.success();
     }
 
@@ -113,6 +119,7 @@ public class DishController {
      */
     @PostMapping("/status/{status}")
     @ApiOperation("商品开关")
+    @CacheEvict(cacheNames = "setmealCache",allEntries = true)
     public Result startOrStop(@PathVariable Integer status,Long id){
         log.info("商品开关:{},{}",status,id);
         dishService.startOrStop(status,id);
