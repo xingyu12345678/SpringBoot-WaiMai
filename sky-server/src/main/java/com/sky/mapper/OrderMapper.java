@@ -13,6 +13,9 @@ import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
+
+
+
     /**
      *添加订单表
      * @param orders
@@ -69,4 +72,11 @@ public interface OrderMapper {
      * @return
      */
     Double sumByMap(Map map);
+
+    /**
+     * 订单查询
+     * @param map
+     * @return
+     */
+    Integer countByMap(Map map);
 }
