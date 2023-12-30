@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface OrderMapper {
@@ -32,8 +34,8 @@ public interface OrderMapper {
     /**
      *下单后修改表状态
      */
-    @Update("update orders set status = #{orderStatus},pay_status = #{orderPaidStatus} ,checkout_time = #{check_out_time} where user_id = #{userId}")
-    void updateStatus(Integer orderStatus, Integer orderPaidStatus, LocalDateTime check_out_time, Long userId);
+    @Update("update orders set status = #{orderStatus},pay_status = #{orderPaidStatus} ,checkout_time = #{check_out_time} where number = #{number}")
+    void updateStatus(Integer orderStatus, Integer orderPaidStatus, LocalDateTime check_out_time, String number);
 
 
 
@@ -50,4 +52,21 @@ public interface OrderMapper {
      */
     @Select("select count(id) from orders where status = #{status}")
     Integer countStatus(Integer status);
+
+    /**
+     * 根据订单状态和时间查询订单
+     *
+     * @param status
+     * @param time
+     * @return
+     */
+    @Select("select * from orders where status = #{status} and order_time < #{time}")
+    List<Orders> getByStatusAndOrderTimeLT(Integer status, LocalDateTime time);
+
+    /**
+     * 计算营业额
+     * @param map
+     * @return
+     */
+    Double sumByMap(Map map);
 }

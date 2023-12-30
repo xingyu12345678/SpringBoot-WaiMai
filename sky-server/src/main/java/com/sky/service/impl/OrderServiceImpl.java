@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -18,6 +19,8 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
+import io.swagger.util.Json;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
@@ -27,9 +30,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,6 +51,8 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private WebSocketServer webSocketServer;
     Orders orders = new Orders();
 
     /**
@@ -149,7 +152,15 @@ public class OrderServiceImpl implements OrderService {
 
         LocalDateTime check_out_time = LocalDateTime.now();
 
-        orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, userId);
+        orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, ordersPaymentDTO.getOrderNumber());
+        Map map = new HashMap();
+        map.put("type",1);
+        map.put("orderId",user);
+        map.put("content","订单号:"+ ordersPaymentDTO.getOrderNumber());
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
+
         return vo;
 
     }
@@ -174,6 +185,7 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
     }
 
     /**
@@ -367,6 +379,10 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
     }
 
+    /**
+     * 商家端取消订单
+     * @param ordersCancelDTO
+     */
     @Override
     public void cancel(OrdersCancelDTO ordersCancelDTO) {
         orders.setId(ordersCancelDTO.getId());
@@ -376,5 +392,25 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
 
 
+    }
+
+    /**
+     * 客户催单
+     * @param id
+     */
+    @Override
+    public void reminder(Long id) {
+        Orders orders = orderMapper.orderGetById(id);
+
+        if (orders == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        Map map = new HashMap();
+        map.put("type",2);
+        map.put("order",id);
+        map.put("content","订单号:"+orders.getNumber());
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 }
